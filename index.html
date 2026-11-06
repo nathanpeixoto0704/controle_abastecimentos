@@ -2,126 +2,199 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F5F5F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>Abastecimentos da moto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#EDF0EE; --surface:#F8FAF9; --ink:#13222B; --muted:#5B6B73; --line:#CBD3D0;
-  --accent:#0F4C5C; --signal:#E39B0B; --good:#1F7A4D; --bad:#B5382F; --on-accent:#fff;
+  --bg:#F5F5F7; --card:#FFFFFF; --ink:#1D1D1F; --muted:#6E6E73;
+  --sep:rgba(60,60,67,.16); --fill:rgba(120,120,128,.12);
+  --accent:#0071E3; --btn:#0071E3; --orange:#FF9500; --good:#248A3D; --bad:#D70015;
+  --toast:rgba(29,29,31,.92);
   color-scheme:light;
 }
 @media (prefers-color-scheme:dark){
   :root{
-    --bg:#0F1A1F; --surface:#16252C; --ink:#E6ECEA; --muted:#8FA1A8; --line:#2A3B43;
-    --accent:#5BB4C6; --signal:#F2B03A; --good:#4CC38A; --bad:#E57B70; --on-accent:#0F1A1F;
+    --bg:#000000; --card:#1C1C1E; --ink:#F5F5F7; --muted:#98989D;
+    --sep:rgba(84,84,88,.6); --fill:rgba(120,120,128,.24);
+    --accent:#4DA3FF; --orange:#FF9F0A; --good:#30D158; --bad:#FF6961;
+    --toast:rgba(58,58,60,.95);
     color-scheme:dark;
   }
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Barlow",system-ui,sans-serif;font-variant-numeric:tabular-nums}
-main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
-h1,h2{font-family:"Barlow Semi Condensed",system-ui,sans-serif;margin:0}
-h1{font-size:34px;font-weight:700;letter-spacing:-.01em}
-h2{font-size:22px;font-weight:600;margin-bottom:12px}
-header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
-#status{font-size:14px;color:var(--muted);min-height:21px}
-#status.err{color:var(--bad)}
-section{margin-top:36px}
-.top{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start;margin-top:0}
-@media (max-width:720px){.top{grid-template-columns:1fr}}
-form{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media (max-width:480px){form{grid-template-columns:1fr}}
-label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
-input{font:500 17px "Barlow",sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;min-width:0}
-input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-button{font:600 16px "Barlow Semi Condensed",sans-serif;border-radius:6px;padding:10px 16px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
-button.primary{background:var(--accent);color:var(--on-accent)}
-button.link{border:0;padding:2px 6px;color:var(--muted);font-weight:500}
-button.link:hover{color:var(--bad)}
-.full{grid-column:1/-1}
-#err{grid-column:1/-1;color:var(--bad);font-size:14px;min-height:21px;margin:0}
-.gauge{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 10px 10px;text-align:center}
-.gauge svg{width:100%;height:auto;display:block}
-.g-track{fill:none;stroke:var(--line);stroke-width:14;stroke-linecap:round}
-.g-val{fill:none;stroke:var(--accent);stroke-width:14;stroke-linecap:round}
-.g-avg{stroke:var(--signal);stroke-width:3;stroke-linecap:round}
-.g-num{font:700 40px "Barlow Semi Condensed",sans-serif;fill:var(--ink)}
-.g-lbl{font:500 13px "Barlow",sans-serif;fill:var(--muted)}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
-.kpi b{display:block;font:700 26px "Barlow Semi Condensed",sans-serif;line-height:1.2}
-.kpi span{font-size:13px;color:var(--muted)}
-.wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
-table{border-collapse:collapse;width:100%;font-size:15px}
-th,td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
-th:first-child,td:first-child{text-align:left}
-th{font:600 14px "Barlow Semi Condensed",sans-serif;color:var(--muted)}
-tr:last-child td{border-bottom:0}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:400 17px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,sans-serif;
+  font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+main{max-width:1000px;margin:0 auto;
+  padding:calc(24px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(96px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+h1,h2,h3{margin:0;letter-spacing:-.022em}
+h1{font-size:34px;line-height:1.1;font-weight:700}
+h2{font-size:22px;font-weight:600;margin:0 0 12px 4px}
+h3{font-size:17px;font-weight:600}
+@media (min-width:720px){ main{padding-top:calc(56px + env(safe-area-inset-top,0px))} h1{font-size:44px} }
+
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+section{margin-top:40px}
+.top{margin-top:0}
+
+.card{background:var(--card);border-radius:18px;box-shadow:0 0 0 .5px var(--sep)}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+
+/* botões */
+button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.btn{display:block;width:100%;height:50px;border:0;border-radius:14px;font-weight:600;font-size:17px;transition:opacity .15s,transform .15s}
+.btn.primary{background:var(--btn);color:#fff}
+.btn.secondary{background:var(--fill);color:var(--accent)}
+.btn:active{transform:scale(.98);opacity:.85}
+.text{background:none;border:0;padding:6px 4px;color:var(--accent);font-size:17px}
+.text:active{opacity:.6}
+.del{background:none;border:0;padding:8px;margin:-8px -8px -8px 0;color:var(--bad);font-size:15px}
+.del:active{opacity:.6}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
+
+/* formulários estilo lista agrupada */
+.list{padding-top:4px}
+.item{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:52px;
+  margin-left:16px;padding:8px 16px 8px 0;border-bottom:.5px solid var(--sep)}
+.item:last-child{border-bottom:0}
+.item span{white-space:nowrap}
+.item input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;text-align:right;padding:6px 0;-moz-appearance:textfield;appearance:none}
+.item input::placeholder{color:var(--muted);opacity:1}
+.item input::-webkit-inner-spin-button,.item input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.card form,form.card{padding-bottom:16px}
+form .btn{width:calc(100% - 32px);margin:12px 16px 0}
+.err{margin:0;padding:10px 16px 0;color:var(--bad);font-size:14px}
+.err:empty{display:none}
+.login{max-width:420px;margin:8px auto 0;padding-top:20px}
+.login h2{margin:0 16px 8px}
+
+/* topo */
+.top{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:20px;align-items:stretch}
+@media (max-width:760px){ .top{grid-template-columns:1fr} }
+.gauge{display:flex;align-items:center;justify-content:center;padding:20px 16px}
+.gauge svg{width:100%;max-width:340px;height:auto;display:block}
+.g-track{fill:none;stroke:var(--fill);stroke-width:12;stroke-linecap:round}
+.g-val{fill:none;stroke:var(--accent);stroke-width:12;stroke-linecap:round}
+.g-avg{stroke:var(--orange);stroke-width:3;stroke-linecap:round}
+.g-num{font:600 40px -apple-system,BlinkMacSystemFont,"SF Pro Display","Inter",system-ui,sans-serif;fill:var(--ink);letter-spacing:-.02em}
+.g-lbl{font:400 11px -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter",system-ui,sans-serif;fill:var(--muted)}
+
+/* indicadores */
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:560px){ .kpis{grid-template-columns:repeat(2,minmax(0,1fr))} }
+.kpi{padding:16px}
+.kpi span{display:block;font-size:13px;color:var(--muted)}
+.kpi b{display:block;margin-top:4px;font-size:28px;line-height:1.15;font-weight:600;letter-spacing:-.02em;white-space:nowrap}
+
+/* mês */
+.chart{padding:16px 12px 12px;margin-bottom:12px}
+.ct{padding:0 6px 12px}
+.bars{display:flex;align-items:stretch;gap:8px;height:180px}
+.b{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+.bw{position:relative;flex:1;width:100%}
+.bw i{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,44px);border-radius:8px 8px 4px 4px;background:var(--accent);opacity:.3}
+.b.last .bw i{opacity:1}
+.bv{font-size:13px;font-weight:600}
+.bl{font-size:12px;color:var(--muted)}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+.mcard{padding:18px}
+.mcard header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.big{font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.1}
+.big small{font-size:15px;font-weight:400;color:var(--muted);margin-left:4px;letter-spacing:0}
+.mcard dl{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;margin:16px 0 0}
+.mcard dt{font-size:13px;color:var(--muted)}
+.mcard dd{margin:0;font-weight:500}
+.deltas{list-style:none;margin:16px 0 0;padding:12px 0 0;border-top:.5px solid var(--sep)}
+.deltas li{display:flex;justify-content:space-between;gap:12px;font-size:15px;padding:2px 0}
+.deltas span{color:var(--muted)}
 .pos{color:var(--good)} .neg{color:var(--bad)}
-.chart{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px}
-.chart svg{width:100%;height:auto;display:block}
-.bar{fill:var(--accent)} .c-txt{font:500 12px "Barlow",sans-serif;fill:var(--muted)} .c-val{font:600 13px "Barlow Semi Condensed",sans-serif;fill:var(--ink)}
-.empty{padding:18px;color:var(--muted)}
-.actions{display:flex;flex-wrap:wrap;gap:10px}
+
+/* histórico */
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:.5px solid var(--sep)}
+.row:last-child{border-bottom:0}
+.r-main{flex:1;min-width:0}
+.r-main b,.r-side b{display:block;font-weight:600;font-size:16px;white-space:nowrap}
+.r-side{text-align:right}
+.meta{display:flex;flex-wrap:wrap;gap:0 12px;font-size:14px;color:var(--muted)}
+.r-side .meta{justify-content:flex-end}
+
+/* dados */
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:520px}
+
+/* aviso */
+#status{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  max-width:calc(100% - 32px);padding:12px 20px;border-radius:999px;background:var(--toast);color:#fff;font-size:15px;
+  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);z-index:20;text-align:center}
+#status:empty{display:none}
+#status.err{background:#D70015}
+@media (prefers-reduced-motion:reduce){ *{transition:none!important} }
 </style>
 </head>
 <body>
 <main>
-  <header>
+  <header class="head">
     <h1>Abastecimentos</h1>
-    <span id="status" role="status" aria-live="polite"></span>
-    <button id="out" class="link" hidden>Sair</button>
+    <button id="out" class="text" hidden>Sair</button>
   </header>
 
-  <form id="login" hidden style="max-width:360px;grid-template-columns:1fr">
-    <label>E-mail<input type="email" id="email" autocomplete="username" required></label>
-    <label>Senha<input type="password" id="pass" autocomplete="current-password" required></label>
-    <p id="lerr" role="alert" style="color:var(--bad);margin:0;font-size:14px;min-height:21px"></p>
-    <button class="primary" type="submit">Entrar</button>
+  <form id="login" class="card login" hidden>
+    <h2>Entrar</h2>
+    <div class="list">
+      <label class="item"><span>E-mail</span><input type="email" id="email" autocomplete="username" placeholder="email@exemplo.com" required></label>
+      <label class="item"><span>Senha</span><input type="password" id="pass" autocomplete="current-password" placeholder="Senha" required></label>
+    </div>
+    <p id="lerr" class="err" role="alert"></p>
+    <button class="btn primary" type="submit">Entrar</button>
   </form>
 
   <div id="app" hidden>
-  <section class="top">
-    <form id="f" novalidate>
-      <label>Data e hora<input type="datetime-local" id="dt" required></label>
-      <label>Quilometragem atual (km)<input type="number" id="km" inputmode="numeric" step="1" min="0" required></label>
-      <label>Litros abastecidos<input type="number" id="l" inputmode="decimal" step="0.01" min="0" required></label>
-      <label>Valor pago (R$)<input type="number" id="v" inputmode="decimal" step="0.01" min="0" required></label>
-      <p id="err" role="alert"></p>
-      <button class="primary full" type="submit">Lançar abastecimento</button>
-    </form>
-    <div class="gauge" id="gauge"></div>
-  </section>
+    <section class="top">
+      <form id="f" class="card" novalidate>
+        <div class="list">
+          <label class="item"><span>Data e hora</span><input type="datetime-local" id="dt" required></label>
+          <label class="item"><span>Quilometragem</span><input type="number" id="km" inputmode="numeric" step="1" min="0" placeholder="km" required></label>
+          <label class="item"><span>Litros</span><input type="number" id="l" inputmode="decimal" step="0.01" min="0" placeholder="litros" required></label>
+          <label class="item"><span>Valor pago</span><input type="number" id="v" inputmode="decimal" step="0.01" min="0" placeholder="R$" required></label>
+        </div>
+        <p id="err" class="err" role="alert"></p>
+        <button class="btn primary" type="submit">Lançar abastecimento</button>
+      </form>
+      <div class="card gauge" id="gauge"></div>
+    </section>
 
-  <section>
-    <div class="kpis" id="kpis"></div>
-  </section>
+    <section>
+      <div class="kpis" id="kpis"></div>
+    </section>
 
-  <section>
-    <h2>Por mês</h2>
-    <div class="wrap" id="monthly"></div>
-    <div class="chart" id="chart" hidden></div>
-  </section>
+    <section>
+      <h2>Por mês</h2>
+      <div class="card chart" id="chart" hidden></div>
+      <div class="months" id="monthly"></div>
+    </section>
 
-  <section>
-    <h2>Histórico</h2>
-    <div class="wrap" id="history"></div>
-  </section>
+    <section>
+      <h2>Histórico</h2>
+      <div class="card" id="history"></div>
+    </section>
 
-  <section>
-    <h2>Dados</h2>
-    <div class="actions">
-      <button id="exp">Baixar CSV</button>
-      <button id="imp">Importar CSV</button>
-      <input type="file" id="file" accept=".csv,text/csv" hidden>
-    </div>
-  </section>
+    <section>
+      <h2>Dados</h2>
+      <div class="actions">
+        <button id="exp" class="btn secondary">Baixar CSV</button>
+        <button id="imp" class="btn secondary">Importar CSV</button>
+        <input type="file" id="file" accept=".csv,text/csv" hidden>
+      </div>
+    </section>
   </div>
+
+  <div id="status" role="status" aria-live="polite"></div>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
@@ -207,82 +280,86 @@ tr:last-child td{border-bottom:0}
   /* ---------- render ---------- */
   function fmtDate(dt){
     var d = new Date(dt);
-    return isNaN(d) ? esc(dt) : d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+    return isNaN(d) ? esc(dt) : d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}).replace(', ',' ');
   }
-  function fmtMonth(k){ return k.slice(5,7) + '/' + k.slice(0,4); }
-  function sgn(v){
-    if(v == null) return '<td>—</td>';
-    return '<td class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + brl.format(Math.abs(v)) + '</td>';
+  function fmtMonthLong(k){
+    var t = new Date(k + '-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+    return t.charAt(0).toUpperCase() + t.slice(1);
   }
-
-  function sgnKml(v){
-    if(v == null) return '<td>—</td>';
-    return '<td class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + n1.format(Math.abs(v)) + ' km/l</td>';
+  function delta(v, f){
+    if(v == null) return '<b>—</b>';
+    return '<b class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + f(Math.abs(v)) + '</b>';
   }
 
   function renderGauge(list, tot){
     var last = null;
     for(var i = list.length - 1; i >= 0; i--){ if(list[i].kml != null){ last = list[i].kml; break; } }
-    var MAX = 60, cx = 120, cy = 120, r = 90;
+    var MAX = 60, cx = 120, cy = 118, r = 96;
     function pt(f, rad){ var t = Math.PI * (1 - Math.min(Math.max(f,0),1)); return [cx + rad*Math.cos(t), cy - rad*Math.sin(t)]; }
-    var s = '<svg viewBox="0 0 240 150" role="img" aria-label="Eficiência do último abastecimento">';
-    s += '<path class="g-track" d="M30 120 A90 90 0 0 1 210 120"/>';
+    var s = '<svg viewBox="0 0 240 160" role="img" aria-label="Eficiência do último abastecimento">';
+    s += '<path class="g-track" d="M24 118 A96 96 0 0 1 216 118"/>';
     if(last != null){
       var e = pt(last / MAX, r);
-      s += '<path class="g-val" d="M30 120 A90 90 0 0 1 ' + e[0].toFixed(2) + ' ' + e[1].toFixed(2) + '"/>';
+      s += '<path class="g-val" d="M24 118 A96 96 0 0 1 ' + e[0].toFixed(2) + ' ' + e[1].toFixed(2) + '"/>';
     }
     if(tot.kml != null){
-      var a = pt(tot.kml / MAX, r - 14), b = pt(tot.kml / MAX, r + 14);
+      var a = pt(tot.kml / MAX, r - 12), b = pt(tot.kml / MAX, r + 12);
       s += '<line class="g-avg" x1="' + a[0].toFixed(2) + '" y1="' + a[1].toFixed(2) + '" x2="' + b[0].toFixed(2) + '" y2="' + b[1].toFixed(2) + '"/>';
     }
     s += '<text class="g-num" x="120" y="108" text-anchor="middle">' + (last != null ? n1.format(last) : '—') + '</text>';
-    s += '<text class="g-lbl" x="120" y="128" text-anchor="middle">km/l no último abastecimento</text>';
-    s += '<text class="g-lbl" x="120" y="146" text-anchor="middle">média ' + (tot.kml != null ? n1.format(tot.kml) + ' km/l' : '—') + '</text>';
+    s += '<text class="g-lbl" x="120" y="136" text-anchor="middle">km/l no último abastecimento</text>';
+    s += '<text class="g-lbl" x="120" y="154" text-anchor="middle">média ' + (tot.kml != null ? n1.format(tot.kml) + ' km/l' : '—') + '</text>';
     s += '</svg>';
     $('gauge').innerHTML = s;
   }
 
   function renderKpis(tot){
     var items = [
-      [tot.kml != null ? n1.format(tot.kml) : '—', 'km/l médio'],
-      [tot.cpk != null ? brl.format(tot.cpk) : '—', 'custo por km'],
-      [tot.ppl != null ? brl.format(tot.ppl) : '—', 'preço médio por litro'],
-      [n0.format(tot.dist) + ' km', 'distância rodada'],
-      [n1.format(tot.l) + ' L', 'combustível'],
-      [brl.format(tot.v), 'gasto total']
+      [tot.kml != null ? n1.format(tot.kml) + ' km/l' : '—', 'Consumo médio'],
+      [tot.cpk != null ? brl.format(tot.cpk) : '—', 'Custo por km'],
+      [tot.ppl != null ? brl.format(tot.ppl) : '—', 'Preço médio por litro'],
+      [n0.format(tot.dist) + ' km', 'Distância rodada'],
+      [n1.format(tot.l) + ' L', 'Combustível'],
+      [brl.format(tot.v), 'Gasto total']
     ];
-    $('kpis').innerHTML = items.map(function(i){ return '<div class="kpi"><b>' + i[0] + '</b><span>' + i[1] + '</span></div>'; }).join('');
+    $('kpis').innerHTML = items.map(function(i){ return '<div class="card kpi"><span>' + i[1] + '</span><b>' + i[0] + '</b></div>'; }).join('');
   }
 
   function renderMonthly(ms){
-    if(!ms.length){ $('monthly').innerHTML = '<div class="empty">Sem dados suficientes. São necessários ao menos 2 abastecimentos.</div>'; $('chart').hidden = true; return; }
-    var h = '<table><thead><tr><th>Mês</th><th>Distância</th><th>Litros</th><th>Gasto</th><th>km/l</th><th>R$/km</th><th>km/l vs. média</th><th>R$ vs. mês anterior</th></tr></thead><tbody>';
-    ms.slice().reverse().forEach(function(m){
-      h += '<tr><td>' + fmtMonth(m.k) + '</td><td>' + n0.format(m.dist) + ' km</td><td>' + n1.format(m.l) + '</td><td>' + brl.format(m.v) + '</td><td>' + n1.format(m.kml) + '</td><td>' + brl.format(m.cpk) + '</td>' + sgnKml(m.vsAvg) + sgn(m.vsPrev) + '</tr>';
-    });
-    $('monthly').innerHTML = h + '</tbody></table>';
+    if(!ms.length){
+      $('monthly').innerHTML = '<div class="card empty">Sem dados suficientes. São necessários ao menos 2 abastecimentos.</div>';
+      $('chart').hidden = true; return;
+    }
+    var kmlF = function(x){ return n1.format(x) + ' km/l'; }, brlF = function(x){ return brl.format(x); };
+    $('monthly').innerHTML = ms.slice().reverse().map(function(m){
+      return '<article class="card mcard"><header><h3>' + fmtMonthLong(m.k) + '</h3><div class="big">' + n1.format(m.kml) + '<small>km/l</small></div></header>' +
+        '<dl><div><dt>Distância</dt><dd>' + n0.format(m.dist) + ' km</dd></div>' +
+        '<div><dt>Gasto</dt><dd>' + brl.format(m.v) + '</dd></div>' +
+        '<div><dt>Litros</dt><dd>' + n1.format(m.l) + ' L</dd></div>' +
+        '<div><dt>Custo por km</dt><dd>' + brl.format(m.cpk) + '</dd></div></dl>' +
+        '<ul class="deltas"><li><span>km/l vs. média</span>' + delta(m.vsAvg, kmlF) + '</li>' +
+        '<li><span>R$ vs. mês anterior</span>' + delta(m.vsPrev, brlF) + '</li></ul></article>';
+    }).join('');
 
-    var data = ms.slice(-12), W = 600, H = 170, pad = 24, bw = (W - pad*2) / data.length;
-    var max = Math.max.apply(null, data.map(function(d){ return d.kml; })) * 1.15;
-    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="km/l por mês">';
-    data.forEach(function(d,i){
-      var bh = (d.kml / max) * (H - 50), x = pad + i*bw + bw*0.15, w = bw*0.7, y = H - 24 - bh;
-      s += '<rect class="bar" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="3"/>';
-      s += '<text class="c-val" x="' + (x + w/2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle">' + n1.format(d.kml) + '</text>';
-      s += '<text class="c-txt" x="' + (x + w/2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.k.slice(5,7) + '/' + d.k.slice(2,4) + '</text>';
-    });
-    $('chart').innerHTML = s + '</svg>';
+    var data = ms.slice(-12);
+    var max = Math.max.apply(null, data.map(function(d){ return d.kml; }));
+    $('chart').innerHTML = '<h3 class="ct">km/l por mês</h3><div class="bars">' + data.map(function(d,i){
+      var pct = Math.max(3, d.kml / max * 100).toFixed(1);
+      return '<div class="b' + (i === data.length - 1 ? ' last' : '') + '"><span class="bv">' + n1.format(d.kml) + '</span><div class="bw"><i style="height:' + pct + '%"></i></div><span class="bl">' + d.k.slice(5,7) + '/' + d.k.slice(2,4) + '</span></div>';
+    }).join('') + '</div>';
     $('chart').hidden = false;
   }
 
   function renderHistory(list){
     if(!list.length){ $('history').innerHTML = '<div class="empty">Nenhum abastecimento lançado.</div>'; return; }
-    var h = '<table><thead><tr><th>Data</th><th>km</th><th>Litros</th><th>Valor</th><th>R$/L</th><th>Trecho</th><th>km/l</th><th></th></tr></thead><tbody>';
+    var h = '';
     for(var i = list.length - 1; i >= 0; i--){
       var o = list[i];
-      h += '<tr><td>' + fmtDate(o.dt) + '</td><td>' + n0.format(o.km) + '</td><td>' + n2.format(o.l) + '</td><td>' + brl.format(o.v) + '</td><td>' + brl.format(o.ppl) + '</td><td>' + (o.dist != null ? n0.format(o.dist) + ' km' : '—') + '</td><td>' + (o.kml != null ? n1.format(o.kml) : '—') + '</td><td><button class="link" data-del="' + i + '" aria-label="Excluir lançamento">Excluir</button></td></tr>';
+      h += '<div class="row"><div class="r-main"><b>' + fmtDate(o.dt) + '</b><div class="meta"><span>' + n0.format(o.km) + ' km</span><span>' + n2.format(o.l) + ' L</span><span>' + brl.format(o.v) + '</span></div></div>' +
+           '<div class="r-side"><b>' + (o.kml != null ? n1.format(o.kml) + ' km/l' : '—') + '</b><div class="meta">' + (o.dist != null ? '<span>' + n0.format(o.dist) + ' km</span>' : '') + '<span>' + brl.format(o.ppl) + '/L</span></div></div>' +
+           '<button class="del" data-del="' + i + '" aria-label="Excluir lançamento">Excluir</button></div>';
     }
-    $('history').innerHTML = h + '</tbody></table>';
+    $('history').innerHTML = h;
   }
 
   function render(){
