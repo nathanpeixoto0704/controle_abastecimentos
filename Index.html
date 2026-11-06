@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Abastecimentos da moto</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0EE; --surface:#F8FAF9; --ink:#13222B; --muted:#5B6B73; --line:#CBD3D0;
+  --accent:#0F4C5C; --signal:#E39B0B; --good:#1F7A4D; --bad:#B5382F; --on-accent:#fff;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0F1A1F; --surface:#16252C; --ink:#E6ECEA; --muted:#8FA1A8; --line:#2A3B43;
+    --accent:#5BB4C6; --signal:#F2B03A; --good:#4CC38A; --bad:#E57B70; --on-accent:#0F1A1F;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Barlow",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
+h1,h2{font-family:"Barlow Semi Condensed",system-ui,sans-serif;margin:0}
+h1{font-size:34px;font-weight:700;letter-spacing:-.01em}
+h2{font-size:22px;font-weight:600;margin-bottom:12px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+#status{font-size:14px;color:var(--muted);min-height:21px}
+#status.err{color:var(--bad)}
+section{margin-top:36px}
+.top{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start;margin-top:0}
+@media (max-width:720px){.top{grid-template-columns:1fr}}
+form{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:480px){form{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
+input{font:500 17px "Barlow",sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;min-width:0}
+input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button{font:600 16px "Barlow Semi Condensed",sans-serif;border-radius:6px;padding:10px 16px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
+button.primary{background:var(--accent);color:var(--on-accent)}
+button.link{border:0;padding:2px 6px;color:var(--muted);font-weight:500}
+button.link:hover{color:var(--bad)}
+.full{grid-column:1/-1}
+#err{grid-column:1/-1;color:var(--bad);font-size:14px;min-height:21px;margin:0}
+.gauge{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 10px 10px;text-align:center}
+.gauge svg{width:100%;height:auto;display:block}
+.g-track{fill:none;stroke:var(--line);stroke-width:14;stroke-linecap:round}
+.g-val{fill:none;stroke:var(--accent);stroke-width:14;stroke-linecap:round}
+.g-avg{stroke:var(--signal);stroke-width:3;stroke-linecap:round}
+.g-num{font:700 40px "Barlow Semi Condensed",sans-serif;fill:var(--ink)}
+.g-lbl{font:500 13px "Barlow",sans-serif;fill:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.kpi b{display:block;font:700 26px "Barlow Semi Condensed",sans-serif;line-height:1.2}
+.kpi span{font-size:13px;color:var(--muted)}
+.wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:15px}
+th,td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+th{font:600 14px "Barlow Semi Condensed",sans-serif;color:var(--muted)}
+tr:last-child td{border-bottom:0}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.chart{margin-top:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px}
+.chart svg{width:100%;height:auto;display:block}
+.bar{fill:var(--accent)} .c-txt{font:500 12px "Barlow",sans-serif;fill:var(--muted)} .c-val{font:600 13px "Barlow Semi Condensed",sans-serif;fill:var(--ink)}
+.empty{padding:18px;color:var(--muted)}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+details{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
+.cfg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+@media (max-width:480px){.cfg{grid-template-columns:1fr}}
+.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
+.chk input{width:auto}
+.note{font-size:13px;color:var(--muted);margin:10px 0 0}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Abastecimentos</h1>
+    <span id="status" role="status" aria-live="polite"></span>
+  </header>
+
+  <section class="top">
+    <form id="f" novalidate>
+      <label>Data e hora<input type="datetime-local" id="dt" required></label>
+      <label>Quilometragem atual (km)<input type="number" id="km" inputmode="numeric" step="1" min="0" required></label>
+      <label>Litros abastecidos<input type="number" id="l" inputmode="decimal" step="0.01" min="0" required></label>
+      <label>Valor pago (R$)<input type="number" id="v" inputmode="decimal" step="0.01" min="0" required></label>
+      <p id="err" role="alert"></p>
+      <button class="primary full" type="submit">Lançar abastecimento</button>
+    </form>
+    <div class="gauge" id="gauge"></div>
+  </section>
+
+  <section>
+    <div class="kpis" id="kpis"></div>
+  </section>
+
+  <section>
+    <h2>Por mês</h2>
+    <div class="wrap" id="monthly"></div>
+    <div class="chart" id="chart" hidden></div>
+  </section>
+
+  <section>
+    <h2>Histórico</h2>
+    <div class="wrap" id="history"></div>
+  </section>
+
+  <section>
+    <h2>Dados</h2>
+    <div class="actions">
+      <button id="exp">Baixar CSV</button>
+      <button id="imp">Importar CSV</button>
+      <input type="file" id="file" accept=".csv,text/csv" hidden>
+      <button id="push">Salvar no repositório</button>
+      <button id="pull">Carregar do repositório</button>
+    </div>
+    <details>
+      <summary>Configuração</summary>
+      <div class="cfg">
+        <label>Usuário do GitHub<input id="c-owner" autocomplete="off"></label>
+        <label>Repositório<input id="c-repo" autocomplete="off"></label>
+        <label>Branch<input id="c-branch" autocomplete="off"></label>
+        <label>Arquivo CSV<input id="c-path" autocomplete="off"></label>
+        <label class="full">Token (fine-grained, permissão Contents: Read and write)<input id="c-token" type="password" autocomplete="off"></label>
+        <label>km/l do carro (comparação de economia)<input id="c-car" type="number" step="0.1" min="1"></label>
+        <label class="chk"><input id="c-auto" type="checkbox">Salvar no repositório ao lançar</label>
+      </div>
+      <p class="note">Token e dados ficam apenas no armazenamento local deste navegador.</p>
+    </details>
+  </section>
+</main>
+
+<script>
+(function(){
+  var KEY = 'moto.abastecimentos.v1', CFG = 'moto.cfg.v1';
+  var rows = [];
+  var cfg = { owner:'', repo:'', branch:'main', path:'abastecimentos.csv', token:'', auto:false, car:10 };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var nf = function(d){ return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}); };
+  var n0 = nf(0), n1 = nf(1), n2 = nf(2);
+  var brl = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
+  var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
+
+  /* ---------- storage ---------- */
+  function loadLocal(){
+    try{ rows = JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ rows = []; }
+    try{ Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); }catch(e){}
+    sortRows();
+  }
+  function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(rows)); }catch(e){} }
+  function saveCfg(){ try{ localStorage.setItem(CFG, JSON.stringify(cfg)); }catch(e){} }
+  function sortRows(){ rows.sort(function(a,b){ return a.dt < b.dt ? -1 : a.dt > b.dt ? 1 : a.km - b.km; }); }
+
+  /* ---------- CSV ---------- */
+  var HEADER = 'data_hora,quilometragem_atual,litros_abastecidos,valor_pago';
+  function toCSV(){
+    return HEADER + '\n' + rows.map(function(r){ return [r.dt, r.km, r.l, r.v].join(','); }).join('\n') + '\n';
+  }
+  function fromCSV(text){
+    var out = [];
+    text.replace(/^\uFEFF/,'').split(/\r?\n/).forEach(function(line){
+      line = line.trim();
+      if(!line || line.indexOf('data_hora') === 0) return;
+      var p = line.split(/[,;]/);
+      if(p.length < 4) return;
+      var km = parseFloat(p[1]), l = parseFloat(p[2]), v = parseFloat(p[3]);
+      if(!p[0] || isNaN(km) || isNaN(l) || isNaN(v)) return;
+      out.push({ dt:p[0].trim(), km:km, l:l, v:v });
+    });
+    return out;
+  }
+
+  /* ---------- cálculos ---------- */
+  // Método do tanque cheio: o trecho entre dois abastecimentos usa os litros do abastecimento mais recente.
+  function compute(){
+    var res = rows.map(function(r,i){
+      var o = { dt:r.dt, km:r.km, l:r.l, v:r.v, ppl:r.v / r.l, dist:null, kml:null, cpk:null };
+      if(i > 0){
+        var d = r.km - rows[i-1].km;
+        if(d > 0 && r.l > 0){ o.dist = d; o.kml = d / r.l; o.cpk = r.v / d; }
+      }
+      return o;
+    });
+    return res;
+  }
+  function monthly(list){
+    var m = {};
+    list.forEach(function(o){
+      if(o.dist == null) return;
+      var k = o.dt.slice(0,7);
+      var x = m[k] || (m[k] = { k:k, dist:0, l:0, v:0 });
+      x.dist += o.dist; x.l += o.l; x.v += o.v;
+    });
+    var keys = Object.keys(m).sort();
+    var prev = null;
+    return keys.map(function(k){
+      var x = m[k];
+      x.kml = x.dist / x.l; x.cpk = x.v / x.dist; x.ppl = x.v / x.l;
+      x.vsPrev = prev ? (prev.cpk - x.cpk) * x.dist : null;
+      var car = cfg.car > 0 ? cfg.car : null;
+      x.vsCar = car ? (x.dist / car) * x.ppl - x.v : null;
+      prev = x;
+      return x;
+    });
+  }
+
+  /* ---------- render ---------- */
+  function fmtDate(dt){
+    var d = new Date(dt);
+    return isNaN(d) ? esc(dt) : d.toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  }
+  function fmtMonth(k){ return k.slice(5,7) + '/' + k.slice(0,4); }
+  function sgn(v){
+    if(v == null) return '<td>—</td>';
+    return '<td class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + brl.format(Math.abs(v)) + '</td>';
+  }
+
+  function renderGauge(list, tot){
+    var last = null;
+    for(var i = list.length - 1; i >= 0; i--){ if(list[i].kml != null){ last = list[i].kml; break; } }
+    var MAX = 60, cx = 120, cy = 120, r = 90;
+    function pt(f, rad){ var t = Math.PI * (1 - Math.min(Math.max(f,0),1)); return [cx + rad*Math.cos(t), cy - rad*Math.sin(t)]; }
+    var s = '<svg viewBox="0 0 240 150" role="img" aria-label="Eficiência do último abastecimento">';
+    s += '<path class="g-track" d="M30 120 A90 90 0 0 1 210 120"/>';
+    if(last != null){
+      var e = pt(last / MAX, r);
+      s += '<path class="g-val" d="M30 120 A90 90 0 0 1 ' + e[0].toFixed(2) + ' ' + e[1].toFixed(2) + '"/>';
+    }
+    if(tot.kml != null){
+      var a = pt(tot.kml / MAX, r - 14), b = pt(tot.kml / MAX, r + 14);
+      s += '<line class="g-avg" x1="' + a[0].toFixed(2) + '" y1="' + a[1].toFixed(2) + '" x2="' + b[0].toFixed(2) + '" y2="' + b[1].toFixed(2) + '"/>';
+    }
+    s += '<text class="g-num" x="120" y="108" text-anchor="middle">' + (last != null ? n1.format(last) : '—') + '</text>';
+    s += '<text class="g-lbl" x="120" y="128" text-anchor="middle">km/l no último abastecimento</text>';
+    s += '<text class="g-lbl" x="120" y="146" text-anchor="middle">média ' + (tot.kml != null ? n1.format(tot.kml) + ' km/l' : '—') + '</text>';
+    s += '</svg>';
+    $('gauge').innerHTML = s;
+  }
+
+  function renderKpis(tot){
+    var items = [
+      [tot.kml != null ? n1.format(tot.kml) : '—', 'km/l médio'],
+      [tot.cpk != null ? brl.format(tot.cpk) : '—', 'custo por km'],
+      [tot.ppl != null ? brl.format(tot.ppl) : '—', 'preço médio por litro'],
+      [n0.format(tot.dist) + ' km', 'distância rodada'],
+      [n1.format(tot.l) + ' L', 'combustível'],
+      [brl.format(tot.v), 'gasto total']
+    ];
+    $('kpis').innerHTML = items.map(function(i){ return '<div class="kpi"><b>' + i[0] + '</b><span>' + i[1] + '</span></div>'; }).join('');
+  }
+
+  function renderMonthly(ms){
+    if(!ms.length){ $('monthly').innerHTML = '<div class="empty">Sem dados suficientes. São necessários ao menos 2 abastecimentos.</div>'; $('chart').hidden = true; return; }
+    var h = '<table><thead><tr><th>Mês</th><th>Distância</th><th>Litros</th><th>Gasto</th><th>km/l</th><th>R$/km</th><th>vs. mês anterior</th><th>vs. carro</th></tr></thead><tbody>';
+    ms.slice().reverse().forEach(function(m){
+      h += '<tr><td>' + fmtMonth(m.k) + '</td><td>' + n0.format(m.dist) + ' km</td><td>' + n1.format(m.l) + '</td><td>' + brl.format(m.v) + '</td><td>' + n1.format(m.kml) + '</td><td>' + brl.format(m.cpk) + '</td>' + sgn(m.vsPrev) + sgn(m.vsCar) + '</tr>';
+    });
+    $('monthly').innerHTML = h + '</tbody></table>';
+
+    var data = ms.slice(-12), W = 600, H = 170, pad = 24, bw = (W - pad*2) / data.length;
+    var max = Math.max.apply(null, data.map(function(d){ return d.kml; })) * 1.15;
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="km/l por mês">';
+    data.forEach(function(d,i){
+      var bh = (d.kml / max) * (H - 50), x = pad + i*bw + bw*0.15, w = bw*0.7, y = H - 24 - bh;
+      s += '<rect class="bar" x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + bh.toFixed(1) + '" rx="3"/>';
+      s += '<text class="c-val" x="' + (x + w/2).toFixed(1) + '" y="' + (y - 5).toFixed(1) + '" text-anchor="middle">' + n1.format(d.kml) + '</text>';
+      s += '<text class="c-txt" x="' + (x + w/2).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.k.slice(5,7) + '/' + d.k.slice(2,4) + '</text>';
+    });
+    $('chart').innerHTML = s + '</svg>';
+    $('chart').hidden = false;
+  }
+
+  function renderHistory(list){
+    if(!list.length){ $('history').innerHTML = '<div class="empty">Nenhum abastecimento lançado.</div>'; return; }
+    var h = '<table><thead><tr><th>Data</th><th>km</th><th>Litros</th><th>Valor</th><th>R$/L</th><th>Trecho</th><th>km/l</th><th></th></tr></thead><tbody>';
+    for(var i = list.length - 1; i >= 0; i--){
+      var o = list[i];
+      h += '<tr><td>' + fmtDate(o.dt) + '</td><td>' + n0.format(o.km) + '</td><td>' + n2.format(o.l) + '</td><td>' + brl.format(o.v) + '</td><td>' + brl.format(o.ppl) + '</td><td>' + (o.dist != null ? n0.format(o.dist) + ' km' : '—') + '</td><td>' + (o.kml != null ? n1.format(o.kml) : '—') + '</td><td><button class="link" data-del="' + i + '" aria-label="Excluir lançamento">Excluir</button></td></tr>';
+    }
+    $('history').innerHTML = h + '</tbody></table>';
+  }
+
+  function render(){
+    var list = compute(), ms = monthly(list);
+    var tot = { dist:0, l:0, v:0, kml:null, cpk:null, ppl:null };
+    list.forEach(function(o){ if(o.dist != null){ tot.dist += o.dist; tot.l += o.l; tot.v += o.v; } });
+    if(tot.dist > 0){ tot.kml = tot.dist / tot.l; tot.cpk = tot.v / tot.dist; tot.ppl = tot.v / tot.l; }
+    renderGauge(list, tot); renderKpis(tot); renderMonthly(ms); renderHistory(list);
+    $('km').placeholder = rows.length ? 'acima de ' + n0.format(rows[rows.length-1].km) : '';
+  }
+
+  /* ---------- status ---------- */
+  var tm;
+  function status(msg, isErr){
+    var el = $('status'); el.textContent = msg; el.className = isErr ? 'err' : '';
+    clearTimeout(tm); if(msg) tm = setTimeout(function(){ el.textContent = ''; }, 6000);
+  }
+
+  /* ---------- GitHub ---------- */
+  function ghReady(){ return cfg.owner && cfg.repo && cfg.path; }
+  function ghUrl(){ return 'https://api.github.com/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + cfg.path.split('/').map(encodeURIComponent).join('/'); }
+  function ghHeaders(){
+    var h = { 'Accept':'application/vnd.github+json' };
+    if(cfg.token) h['Authorization'] = 'Bearer ' + cfg.token;
+    return h;
+  }
+  function ghGet(){
+    return fetch(ghUrl() + '?ref=' + encodeURIComponent(cfg.branch || 'main') + '&t=' + Date.now(), { headers: ghHeaders(), cache:'no-store' }).then(function(r){
+      if(r.status === 404) return null;
+      if(!r.ok) throw new Error('GitHub ' + r.status);
+      return r.json();
+    });
+  }
+  function push(){
+    if(!ghReady() || !cfg.token){ status('Configure usuário, repositório e token.', true); return Promise.resolve(false); }
+    status('Salvando no repositório…');
+    return ghGet().then(function(cur){
+      var body = { message: 'Atualiza abastecimentos', content: btoa(unescape(encodeURIComponent(toCSV()))), branch: cfg.branch || 'main' };
+      if(cur && cur.sha) body.sha = cur.sha;
+      return fetch(ghUrl(), { method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, ghHeaders()), body: JSON.stringify(body) });
+    }).then(function(r){
+      if(!r.ok) throw new Error('GitHub ' + r.status);
+      status('CSV salvo no repositório.'); return true;
+    }).catch(function(e){ status('Falha ao salvar: ' + e.message, true); return false; });
+  }
+  function pull(silent){
+    var p;
+    if(ghReady()){
+      p = ghGet().then(function(cur){
+        if(!cur) return null;
+        return new TextDecoder().decode(Uint8Array.from(atob(cur.content.replace(/\n/g,'')), function(c){ return c.charCodeAt(0); }));
+      });
+    } else {
+      p = fetch(cfg.path + '?t=' + Date.now(), { cache:'no-store' }).then(function(r){ return r.ok ? r.text() : null; });
+    }
+    return p.then(function(text){
+      if(text == null){ if(!silent) status('CSV não encontrado no repositório.', true); return; }
+      var data = fromCSV(text);
+      if(!data.length){ if(!silent) status('CSV vazio.', true); return; }
+      if(!silent && rows.length && !confirm('Substituir os dados locais pelos ' + data.length + ' lançamentos do repositório?')) return;
+      rows = data; sortRows(); saveLocal(); render();
+      status(data.length + ' lançamentos carregados.');
+    }).catch(function(e){ if(!silent) status('Falha ao carregar: ' + e.message, true); });
+  }
+
+  /* ---------- eventos ---------- */
+  function nowLocal(){
+    var d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return d.toISOString().slice(0,16);
+  }
+
+  $('f').addEventListener('submit', function(ev){
+    ev.preventDefault();
+    var dt = $('dt').value, km = parseFloat($('km').value), l = parseFloat($('l').value), v = parseFloat($('v').value);
+    var err = $('err'); err.textContent = '';
+    if(!dt || isNaN(km) || isNaN(l) || isNaN(v) || l <= 0 || v <= 0 || km < 0){ err.textContent = 'Preencha todos os campos com valores válidos.'; return; }
+    var prev = null, next = null;
+    rows.forEach(function(r){ if(r.dt <= dt) prev = r; else if(!next) next = r; });
+    if(prev && km <= prev.km){ err.textContent = 'A quilometragem deve ser maior que ' + n0.format(prev.km) + ' km.'; return; }
+    if(next && km >= next.km){ err.textContent = 'A quilometragem deve ser menor que ' + n0.format(next.km) + ' km.'; return; }
+    rows.push({ dt:dt, km:km, l:l, v:v }); sortRows(); saveLocal(); render();
+    $('km').value = ''; $('l').value = ''; $('v').value = ''; $('dt').value = nowLocal();
+    status('Abastecimento lançado.');
+    if(cfg.auto && cfg.token && ghReady()) push();
+  });
+
+  $('history').addEventListener('click', function(ev){
+    var b = ev.target.closest('[data-del]'); if(!b) return;
+    var i = parseInt(b.getAttribute('data-del'), 10);
+    if(!confirm('Excluir este lançamento?')) return;
+    rows.splice(i, 1); saveLocal(); render();
+    if(cfg.auto && cfg.token && ghReady()) push();
+  });
+
+  $('exp').addEventListener('click', function(){
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([toCSV()], { type:'text/csv;charset=utf-8' }));
+    a.download = 'abastecimentos.csv'; document.body.appendChild(a); a.click(); a.remove();
+  });
+  $('imp').addEventListener('click', function(){ $('file').click(); });
+  $('file').addEventListener('change', function(ev){
+    var f = ev.target.files[0]; if(!f) return;
+    var rd = new FileReader();
+    rd.onload = function(){
+      var data = fromCSV(String(rd.result));
+      if(!data.length){ status('CSV inválido ou vazio.', true); return; }
+      if(rows.length && !confirm('Substituir os dados locais pelos ' + data.length + ' lançamentos do arquivo?')) return;
+      rows = data; sortRows(); saveLocal(); render(); status(data.length + ' lançamentos importados.');
+    };
+    rd.readAsText(f); ev.target.value = '';
+  });
+  $('push').addEventListener('click', push);
+  $('pull').addEventListener('click', function(){ pull(false); });
+
+  [['c-owner','owner'],['c-repo','repo'],['c-branch','branch'],['c-path','path'],['c-token','token']].forEach(function(p){
+    $(p[0]).value = cfg[p[1]] || '';
+    $(p[0]).addEventListener('change', function(){ cfg[p[1]] = this.value.trim(); saveCfg(); });
+  });
+  $('c-car').value = cfg.car;
+  $('c-car').addEventListener('change', function(){ cfg.car = parseFloat(this.value) || 0; saveCfg(); render(); });
+  $('c-auto').checked = !!cfg.auto;
+  $('c-auto').addEventListener('change', function(){ cfg.auto = this.checked; saveCfg(); });
+
+  /* ---------- init ---------- */
+  loadLocal();
+  // preencher campos de configuração após carregar cfg
+  [['c-owner','owner'],['c-repo','repo'],['c-branch','branch'],['c-path','path'],['c-token','token']].forEach(function(p){ $(p[0]).value = cfg[p[1]] || ''; });
+  $('c-car').value = cfg.car; $('c-auto').checked = !!cfg.auto;
+  $('dt').value = nowLocal();
+  render();
+  if(!rows.length) pull(true);
+})();
+</script>
+</body>
+</html>
