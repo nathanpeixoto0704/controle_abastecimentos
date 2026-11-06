@@ -21,6 +21,7 @@
   }
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Barlow",system-ui,sans-serif;font-variant-numeric:tabular-nums}
 main{max-width:980px;margin:0 auto;padding:24px 16px 64px}
@@ -37,7 +38,7 @@ form{background:var(--surface);border:1px solid var(--line);border-radius:10px;p
 @media (max-width:480px){form{grid-template-columns:1fr}}
 label{display:flex;flex-direction:column;gap:4px;font-size:14px;color:var(--muted)}
 input{font:500 17px "Barlow",sans-serif;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:9px 10px;width:100%;min-width:0}
-input:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 button{font:600 16px "Barlow Semi Condensed",sans-serif;border-radius:6px;padding:10px 16px;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent)}
 button.primary{background:var(--accent);color:var(--on-accent)}
 button.link{border:0;padding:2px 6px;color:var(--muted);font-weight:500}
@@ -67,13 +68,6 @@ tr:last-child td{border-bottom:0}
 .bar{fill:var(--accent)} .c-txt{font:500 12px "Barlow",sans-serif;fill:var(--muted)} .c-val{font:600 13px "Barlow Semi Condensed",sans-serif;fill:var(--ink)}
 .empty{padding:18px;color:var(--muted)}
 .actions{display:flex;flex-wrap:wrap;gap:10px}
-details{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
-summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
-.cfg{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-@media (max-width:480px){.cfg{grid-template-columns:1fr}}
-.chk{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
-.chk input{width:auto}
-.note{font-size:13px;color:var(--muted);margin:10px 0 0}
 </style>
 </head>
 <body>
@@ -81,8 +75,17 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
   <header>
     <h1>Abastecimentos</h1>
     <span id="status" role="status" aria-live="polite"></span>
+    <button id="out" class="link" hidden>Sair</button>
   </header>
 
+  <form id="login" hidden style="max-width:360px;grid-template-columns:1fr">
+    <label>E-mail<input type="email" id="email" autocomplete="username" required></label>
+    <label>Senha<input type="password" id="pass" autocomplete="current-password" required></label>
+    <p id="lerr" role="alert" style="color:var(--bad);margin:0;font-size:14px;min-height:21px"></p>
+    <button class="primary" type="submit">Entrar</button>
+  </form>
+
+  <div id="app" hidden>
   <section class="top">
     <form id="f" novalidate>
       <label>Data e hora<input type="datetime-local" id="dt" required></label>
@@ -116,30 +119,19 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
       <button id="exp">Baixar CSV</button>
       <button id="imp">Importar CSV</button>
       <input type="file" id="file" accept=".csv,text/csv" hidden>
-      <button id="push">Salvar no repositório</button>
-      <button id="pull">Carregar do repositório</button>
     </div>
-    <details>
-      <summary>Configuração</summary>
-      <div class="cfg">
-        <label>Usuário do GitHub<input id="c-owner" autocomplete="off"></label>
-        <label>Repositório<input id="c-repo" autocomplete="off"></label>
-        <label>Branch<input id="c-branch" autocomplete="off"></label>
-        <label>Arquivo CSV<input id="c-path" autocomplete="off"></label>
-        <label class="full">Token (fine-grained, permissão Contents: Read and write)<input id="c-token" type="password" autocomplete="off"></label>
-        <label>km/l do carro (comparação de economia)<input id="c-car" type="number" step="0.1" min="1"></label>
-        <label class="chk"><input id="c-auto" type="checkbox">Salvar no repositório ao lançar</label>
-      </div>
-      <p class="note">Token e dados ficam apenas no armazenamento local deste navegador.</p>
-    </details>
   </section>
+  </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
 <script>
 (function(){
-  var KEY = 'moto.abastecimentos.v1', CFG = 'moto.cfg.v1';
-  var rows = [];
-  var cfg = { owner:'', repo:'', branch:'main', path:'abastecimentos.csv', token:'', auto:false, car:10 };
+  // Preencha com os dados do seu projeto no Supabase (a chave publicável pode ficar no código).
+  var SUPABASE_URL = 'https://xdoywqekvfmxujuxgvfw.supabase.co';
+  var SUPABASE_KEY = 'sb_publishable_ruC2CarzvaaXcVdZ9TFnwA_bxvSVlDI';
+  var LOCAL_KEY = 'moto.abastecimentos.v1';
+  var sb = null, rows = [];
 
   var $ = function(id){ return document.getElementById(id); };
   var nf = function(d){ return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}); };
@@ -147,15 +139,15 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
   var brl = new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'});
   var esc = function(s){ return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); };
 
-  /* ---------- storage ---------- */
-  function loadLocal(){
-    try{ rows = JSON.parse(localStorage.getItem(KEY) || '[]'); }catch(e){ rows = []; }
-    try{ Object.assign(cfg, JSON.parse(localStorage.getItem(CFG) || '{}')); }catch(e){}
-    sortRows();
-  }
-  function saveLocal(){ try{ localStorage.setItem(KEY, JSON.stringify(rows)); }catch(e){} }
-  function saveCfg(){ try{ localStorage.setItem(CFG, JSON.stringify(cfg)); }catch(e){} }
+  /* ---------- dados ---------- */
   function sortRows(){ rows.sort(function(a,b){ return a.dt < b.dt ? -1 : a.dt > b.dt ? 1 : a.km - b.km; }); }
+  function fromDb(r){
+    var d = new Date(r.data_hora); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+    return { id:r.id, dt:d.toISOString().slice(0,16), km:Number(r.quilometragem_atual), l:Number(r.litros_abastecidos), v:Number(r.valor_pago) };
+  }
+  function toDb(r){
+    return { data_hora:new Date(r.dt).toISOString(), quilometragem_atual:r.km, litros_abastecidos:r.l, valor_pago:r.v };
+  }
 
   /* ---------- CSV ---------- */
   var HEADER = 'data_hora,quilometragem_atual,litros_abastecidos,valor_pago';
@@ -198,13 +190,15 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
       x.dist += o.dist; x.l += o.l; x.v += o.v;
     });
     var keys = Object.keys(m).sort();
+    var td = 0, tl = 0;
+    keys.forEach(function(k){ td += m[k].dist; tl += m[k].l; });
+    var avg = tl ? td / tl : null;
     var prev = null;
     return keys.map(function(k){
       var x = m[k];
       x.kml = x.dist / x.l; x.cpk = x.v / x.dist; x.ppl = x.v / x.l;
       x.vsPrev = prev ? (prev.cpk - x.cpk) * x.dist : null;
-      var car = cfg.car > 0 ? cfg.car : null;
-      x.vsCar = car ? (x.dist / car) * x.ppl - x.v : null;
+      x.vsAvg = avg != null ? x.kml - avg : null;
       prev = x;
       return x;
     });
@@ -219,6 +213,11 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
   function sgn(v){
     if(v == null) return '<td>—</td>';
     return '<td class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + brl.format(Math.abs(v)) + '</td>';
+  }
+
+  function sgnKml(v){
+    if(v == null) return '<td>—</td>';
+    return '<td class="' + (v >= 0 ? 'pos' : 'neg') + '">' + (v >= 0 ? '+' : '−') + n1.format(Math.abs(v)) + ' km/l</td>';
   }
 
   function renderGauge(list, tot){
@@ -257,9 +256,9 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
 
   function renderMonthly(ms){
     if(!ms.length){ $('monthly').innerHTML = '<div class="empty">Sem dados suficientes. São necessários ao menos 2 abastecimentos.</div>'; $('chart').hidden = true; return; }
-    var h = '<table><thead><tr><th>Mês</th><th>Distância</th><th>Litros</th><th>Gasto</th><th>km/l</th><th>R$/km</th><th>vs. mês anterior</th><th>vs. carro</th></tr></thead><tbody>';
+    var h = '<table><thead><tr><th>Mês</th><th>Distância</th><th>Litros</th><th>Gasto</th><th>km/l</th><th>R$/km</th><th>km/l vs. média</th><th>R$ vs. mês anterior</th></tr></thead><tbody>';
     ms.slice().reverse().forEach(function(m){
-      h += '<tr><td>' + fmtMonth(m.k) + '</td><td>' + n0.format(m.dist) + ' km</td><td>' + n1.format(m.l) + '</td><td>' + brl.format(m.v) + '</td><td>' + n1.format(m.kml) + '</td><td>' + brl.format(m.cpk) + '</td>' + sgn(m.vsPrev) + sgn(m.vsCar) + '</tr>';
+      h += '<tr><td>' + fmtMonth(m.k) + '</td><td>' + n0.format(m.dist) + ' km</td><td>' + n1.format(m.l) + '</td><td>' + brl.format(m.v) + '</td><td>' + n1.format(m.kml) + '</td><td>' + brl.format(m.cpk) + '</td>' + sgnKml(m.vsAvg) + sgn(m.vsPrev) + '</tr>';
     });
     $('monthly').innerHTML = h + '</tbody></table>';
 
@@ -302,51 +301,28 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
     clearTimeout(tm); if(msg) tm = setTimeout(function(){ el.textContent = ''; }, 6000);
   }
 
-  /* ---------- GitHub ---------- */
-  function ghReady(){ return cfg.owner && cfg.repo && cfg.path; }
-  function ghUrl(){ return 'https://api.github.com/repos/' + encodeURIComponent(cfg.owner) + '/' + encodeURIComponent(cfg.repo) + '/contents/' + cfg.path.split('/').map(encodeURIComponent).join('/'); }
-  function ghHeaders(){
-    var h = { 'Accept':'application/vnd.github+json' };
-    if(cfg.token) h['Authorization'] = 'Bearer ' + cfg.token;
-    return h;
+  /* ---------- Supabase ---------- */
+  function showApp(on){ $('login').hidden = on; $('app').hidden = !on; $('out').hidden = !on; }
+
+  async function load(){
+    var res = await sb.from('abastecimentos').select('id,data_hora,quilometragem_atual,litros_abastecidos,valor_pago').order('data_hora', { ascending:true });
+    if(res.error){ status('Falha ao carregar: ' + res.error.message, true); return; }
+    rows = res.data.map(fromDb); sortRows(); render();
   }
-  function ghGet(){
-    return fetch(ghUrl() + '?ref=' + encodeURIComponent(cfg.branch || 'main') + '&t=' + Date.now(), { headers: ghHeaders(), cache:'no-store' }).then(function(r){
-      if(r.status === 404) return null;
-      if(!r.ok) throw new Error('GitHub ' + r.status);
-      return r.json();
-    });
+
+  async function migrateLocal(){
+    var local; try{ local = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); }catch(e){ local = []; }
+    if(!local.length || rows.length) return;
+    if(!confirm('Enviar os ' + local.length + ' lançamentos salvos neste navegador para o Supabase?')) return;
+    var r = await sb.from('abastecimentos').insert(local.map(toDb));
+    if(r.error){ status('Falha ao enviar: ' + r.error.message, true); return; }
+    try{ localStorage.removeItem(LOCAL_KEY); }catch(e){}
+    await load(); status(local.length + ' lançamentos enviados.');
   }
-  function push(){
-    if(!ghReady() || !cfg.token){ status('Configure usuário, repositório e token.', true); return Promise.resolve(false); }
-    status('Salvando no repositório…');
-    return ghGet().then(function(cur){
-      var body = { message: 'Atualiza abastecimentos', content: btoa(unescape(encodeURIComponent(toCSV()))), branch: cfg.branch || 'main' };
-      if(cur && cur.sha) body.sha = cur.sha;
-      return fetch(ghUrl(), { method:'PUT', headers: Object.assign({'Content-Type':'application/json'}, ghHeaders()), body: JSON.stringify(body) });
-    }).then(function(r){
-      if(!r.ok) throw new Error('GitHub ' + r.status);
-      status('CSV salvo no repositório.'); return true;
-    }).catch(function(e){ status('Falha ao salvar: ' + e.message, true); return false; });
-  }
-  function pull(silent){
-    var p;
-    if(ghReady()){
-      p = ghGet().then(function(cur){
-        if(!cur) return null;
-        return new TextDecoder().decode(Uint8Array.from(atob(cur.content.replace(/\n/g,'')), function(c){ return c.charCodeAt(0); }));
-      });
-    } else {
-      p = fetch(cfg.path + '?t=' + Date.now(), { cache:'no-store' }).then(function(r){ return r.ok ? r.text() : null; });
-    }
-    return p.then(function(text){
-      if(text == null){ if(!silent) status('CSV não encontrado no repositório.', true); return; }
-      var data = fromCSV(text);
-      if(!data.length){ if(!silent) status('CSV vazio.', true); return; }
-      if(!silent && rows.length && !confirm('Substituir os dados locais pelos ' + data.length + ' lançamentos do repositório?')) return;
-      rows = data; sortRows(); saveLocal(); render();
-      status(data.length + ' lançamentos carregados.');
-    }).catch(function(e){ if(!silent) status('Falha ao carregar: ' + e.message, true); });
+
+  async function start(){
+    var s = await sb.auth.getSession();
+    if(s.data.session){ showApp(true); await load(); await migrateLocal(); } else { showApp(false); }
   }
 
   /* ---------- eventos ---------- */
@@ -355,7 +331,18 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
     return d.toISOString().slice(0,16);
   }
 
-  $('f').addEventListener('submit', function(ev){
+  $('login').addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    var r = await sb.auth.signInWithPassword({ email:$('email').value.trim(), password:$('pass').value });
+    if(r.error){ $('lerr').textContent = 'E-mail ou senha incorretos.'; return; }
+    $('lerr').textContent = ''; $('pass').value = ''; start();
+  });
+
+  $('out').addEventListener('click', async function(){
+    await sb.auth.signOut(); rows = []; render(); showApp(false);
+  });
+
+  $('f').addEventListener('submit', async function(ev){
     ev.preventDefault();
     var dt = $('dt').value, km = parseFloat($('km').value), l = parseFloat($('l').value), v = parseFloat($('v').value);
     var err = $('err'); err.textContent = '';
@@ -364,18 +351,20 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
     rows.forEach(function(r){ if(r.dt <= dt) prev = r; else if(!next) next = r; });
     if(prev && km <= prev.km){ err.textContent = 'A quilometragem deve ser maior que ' + n0.format(prev.km) + ' km.'; return; }
     if(next && km >= next.km){ err.textContent = 'A quilometragem deve ser menor que ' + n0.format(next.km) + ' km.'; return; }
-    rows.push({ dt:dt, km:km, l:l, v:v }); sortRows(); saveLocal(); render();
+    var ins = await sb.from('abastecimentos').insert(toDb({ dt:dt, km:km, l:l, v:v })).select().single();
+    if(ins.error){ err.textContent = 'Falha ao salvar: ' + ins.error.message; return; }
+    rows.push(fromDb(ins.data)); sortRows(); render();
     $('km').value = ''; $('l').value = ''; $('v').value = ''; $('dt').value = nowLocal();
     status('Abastecimento lançado.');
-    if(cfg.auto && cfg.token && ghReady()) push();
   });
 
-  $('history').addEventListener('click', function(ev){
+  $('history').addEventListener('click', async function(ev){
     var b = ev.target.closest('[data-del]'); if(!b) return;
-    var i = parseInt(b.getAttribute('data-del'), 10);
-    if(!confirm('Excluir este lançamento?')) return;
-    rows.splice(i, 1); saveLocal(); render();
-    if(cfg.auto && cfg.token && ghReady()) push();
+    var i = parseInt(b.getAttribute('data-del'), 10), row = rows[i];
+    if(!row || !confirm('Excluir este lançamento?')) return;
+    var d = await sb.from('abastecimentos').delete().eq('id', row.id);
+    if(d.error){ status('Falha ao excluir: ' + d.error.message, true); return; }
+    rows.splice(i, 1); render();
   });
 
   $('exp').addEventListener('click', function(){
@@ -387,34 +376,27 @@ summary{cursor:pointer;font:600 16px "Barlow Semi Condensed",sans-serif}
   $('file').addEventListener('change', function(ev){
     var f = ev.target.files[0]; if(!f) return;
     var rd = new FileReader();
-    rd.onload = function(){
+    rd.onload = async function(){
       var data = fromCSV(String(rd.result));
       if(!data.length){ status('CSV inválido ou vazio.', true); return; }
-      if(rows.length && !confirm('Substituir os dados locais pelos ' + data.length + ' lançamentos do arquivo?')) return;
-      rows = data; sortRows(); saveLocal(); render(); status(data.length + ' lançamentos importados.');
+      if(!confirm('Adicionar ' + data.length + ' lançamentos do arquivo ao Supabase?')) return;
+      var r = await sb.from('abastecimentos').insert(data.map(toDb));
+      if(r.error){ status('Falha ao importar: ' + r.error.message, true); return; }
+      await load(); status(data.length + ' lançamentos importados.');
     };
     rd.readAsText(f); ev.target.value = '';
   });
-  $('push').addEventListener('click', push);
-  $('pull').addEventListener('click', function(){ pull(false); });
-
-  [['c-owner','owner'],['c-repo','repo'],['c-branch','branch'],['c-path','path'],['c-token','token']].forEach(function(p){
-    $(p[0]).value = cfg[p[1]] || '';
-    $(p[0]).addEventListener('change', function(){ cfg[p[1]] = this.value.trim(); saveCfg(); });
-  });
-  $('c-car').value = cfg.car;
-  $('c-car').addEventListener('change', function(){ cfg.car = parseFloat(this.value) || 0; saveCfg(); render(); });
-  $('c-auto').checked = !!cfg.auto;
-  $('c-auto').addEventListener('change', function(){ cfg.auto = this.checked; saveCfg(); });
 
   /* ---------- init ---------- */
-  loadLocal();
-  // preencher campos de configuração após carregar cfg
-  [['c-owner','owner'],['c-repo','repo'],['c-branch','branch'],['c-path','path'],['c-token','token']].forEach(function(p){ $(p[0]).value = cfg[p[1]] || ''; });
-  $('c-car').value = cfg.car; $('c-auto').checked = !!cfg.auto;
   $('dt').value = nowLocal();
   render();
-  if(!rows.length) pull(true);
+  if(!window.supabase || SUPABASE_URL.indexOf('SEU-PROJETO') > -1){
+    showApp(false); $('lerr').textContent = 'Preencha SUPABASE_URL e SUPABASE_KEY no início do script do index.html.';
+  } else {
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    sb.auth.onAuthStateChange(function(ev){ if(ev === 'SIGNED_OUT'){ rows = []; showApp(false); } });
+    start();
+  }
 })();
 </script>
 </body>
